@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <time.h>
+#include <vector>
 #include <iostream>
 #include <fstream>
+#include <string>
 
 int isStrike(int x1, int y1, int x2, int y2, int N) {
     if ((x1 == x2) || (y1 == y2)) return 1;
@@ -68,7 +70,7 @@ int checkCoordinate(const int M[], int p, int N) {
 
 void print_answer (double seconds, int res)
 {
-    std::ofstream out ("out.txt", ios::out);
+    std::ofstream out ("out.txt", std::ios::out);
     out<<"время работы = "<<seconds<<"\n";
     out<<"количество вариантов= "<<res<<"\n";
 }
@@ -110,7 +112,7 @@ int main(int argc, char **argv) {
         printf("shift %d \n", shift);
         printf("world_size %d \n", world_size);
 
-        int *M = malloc(N * sizeof(int));
+        int *M = (int*)malloc(N * sizeof(int));
         int k = 0;
         for (int i = 1; i < toForRoot; i++) {
             int p = 1;
@@ -155,10 +157,10 @@ int main(int argc, char **argv) {
         print_answer(seconds, k);
 
     } else{
-        int *buff = malloc(2 * sizeof(int));
+        int *buff = (int*)malloc(2 * sizeof(int));
         MPI_Recv(buff, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 
-        int *M = malloc(N * sizeof(int));
+        int *M = (int*)malloc(N * sizeof(int));
         int k = 0;
         for (int i = buff[0]; i < buff[1]; i++) {
             int p = 1;
