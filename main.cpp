@@ -1,6 +1,9 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <malloc.h>
+#include <time.h>
+#include <iostream>
+#include <fstream>
 
 int isStrike(int x1, int y1, int x2, int y2, int N) {
     if ((x1 == x2) || (y1 == y2)) return 1;
@@ -63,6 +66,13 @@ int checkCoordinate(const int M[], int p, int N) {
     return 0;
 }
 
+void print_answer (double seconds, int res)
+{
+    std::ofstream out ("out.txt", ios::out);
+    out<<"время работы = "<<seconds<<"\n";
+    out<<"количество вариантов= "<<res<<"\n";
+}
+
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
     int N = 5;
@@ -70,6 +80,7 @@ int main(int argc, char **argv) {
     int world_rank;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     int name_len;
+    clock_t start, end;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     printf("%d\n", world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -77,6 +88,7 @@ int main(int argc, char **argv) {
     MPI_Status status;
 
     if (world_rank == 0) {
+        start = clock();
         int partSize = N / world_size;
         int shift = N % world_size;
 
@@ -85,10 +97,11 @@ int main(int argc, char **argv) {
         int toForRoot = from;
 
         for (int i = world_rank + 1; i < world_size; ++i) {
+            printf("world_rankTo%d\n", i);
             int buff[2];
             buff[0] = from;
             buff[1] = to;
-            MPI_Send(&buff, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+            MPI_Send(buff, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
             from = to;
             to = to + partSize;
         }
@@ -109,6 +122,9 @@ int main(int argc, char **argv) {
                     if (M[p] > N) while (M[p] > N) p--;
                     else {
                         if (!checkCoordinate(M, p, N)) {
+                            char a1[5];
+                            for(int i = 0; i < N; i++) a1[i] = M[i] + '0';
+                            printf("%s\n", a1);
                             k++;
                             p--;
                         }
@@ -126,18 +142,21 @@ int main(int argc, char **argv) {
         }
         free(M);
         int buffer;
+        printf("Answer %d from processor %s, rank %d out of %d processors\n", k,
+               processor_name, world_rank, world_size);
         for (int i = world_rank+1; i < world_size; ++i) {
             MPI_Recv(&buffer, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
             k += buffer;
         }
-        printf("Answer: %d", k);
-    } else{
-        int n;
-        MPI_Probe(world_rank, 0, MPI_COMM_WORLD, &status);
-        MPI_Get_count(&status, MPI_DOUBLE, &n);
+        end = clock();
+        double seconds = (double)(end - start) / CLOCKS_PER_SEC;
+        printf("Time %lf\n", seconds);
+        printf("Answer: %d\n", k);
+        print_answer(seconds, k);
 
-        int *buff = malloc(n * sizeof(int));
-        MPI_Recv(buff, n, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+    } else{
+        int *buff = malloc(2 * sizeof(int));
+        MPI_Recv(buff, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 
         int *M = malloc(N * sizeof(int));
         int k = 0;
@@ -147,12 +166,14 @@ int main(int argc, char **argv) {
             M[p] = 0;
             while (p >= 1) {
                 M[p] = M[p] + 1;
-                printf("Iteration %d from processor %s, rank %d out of %d processors\n", p,
-                       processor_name, world_rank, world_size);
                 if (p == N - 1) {
                     if (M[p] > N) while (M[p] > N) p--;
                     else {
                         if (!checkCoordinate(M, p, N)) {
+                            char a1[5];
+                            for(int i = 0; i < N; i++) a1[i] = M[i] + '0';
+                            printf("%s", a1);
+                            printf("\n");
                             k++;
                             p--;
                         }
@@ -170,11 +191,9 @@ int main(int argc, char **argv) {
         }
         free(M);
         free(buff);
+        printf("Answer %d from processor %s, rank %d out of %d processors\n", k,
+               processor_name, world_rank, world_size);
         MPI_Send(&k, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
-
-    printf("Hello world from processor %s, rank %d out of %d processors\n",
-           processor_name, world_rank, world_size);
-
     MPI_Finalize();
 }
