@@ -164,10 +164,6 @@ int main(int argc, char **argv) {
                     if (M[p] > N) while (M[p] > N) p--;
                     else {
                         if (!checkCoordinate(M, p, N)) {
-                            char a1[5];
-                            for(int i = 0; i < N; i++) a1[i] = M[i] + '0';
-                            printf("%s", a1);
-                            printf("\n");
                             k++;
                             p--;
                         }
