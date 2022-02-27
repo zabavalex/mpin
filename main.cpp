@@ -77,7 +77,7 @@ void print_answer (double seconds, int res)
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
-    int N = 20;
+    int N = 10;
     int world_size;
     int world_rank;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
