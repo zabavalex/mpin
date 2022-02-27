@@ -77,14 +77,13 @@ void print_answer (double seconds, int res)
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
-    int N = 5;
+    int N = 20;
     int world_size;
     int world_rank;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     int name_len;
     clock_t start, end;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    printf("%d\n", world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Get_processor_name(processor_name, &name_len);
     MPI_Status status;
@@ -99,7 +98,6 @@ int main(int argc, char **argv) {
         int toForRoot = from;
 
         for (int i = world_rank + 1; i < world_size; ++i) {
-            printf("world_rankTo%d\n", i);
             int buff[2];
             buff[0] = from;
             buff[1] = to;
@@ -107,9 +105,6 @@ int main(int argc, char **argv) {
             from = to;
             to = to + partSize;
         }
-        printf("toForRoot %d \n", toForRoot);
-        printf("partSize %d \n", partSize);
-        printf("shift %d \n", shift);
         printf("world_size %d \n", world_size);
 
         int *M = (int*)malloc(N * sizeof(int));
@@ -124,9 +119,6 @@ int main(int argc, char **argv) {
                     if (M[p] > N) while (M[p] > N) p--;
                     else {
                         if (!checkCoordinate(M, p, N)) {
-                            char a1[5];
-                            for(int i = 0; i < N; i++) a1[i] = M[i] + '0';
-                            printf("%s\n", a1);
                             k++;
                             p--;
                         }
